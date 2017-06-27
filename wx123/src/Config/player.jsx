@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ajaxmode from '../Ajax/ajax.js';
 import {system} from '../Component/Config.js';//引入默认配置
 import renshu from '../images/renshu.png';
+import fanhuihuodong from '../images/fanhuihuodong.png';
 class PlayerTop extends React.Component{
     constructor(props){
         super(props);
@@ -12,8 +13,16 @@ class PlayerTop extends React.Component{
             this.setState(state, resolve)
         });
     }
+    backs(){
+        window.webkit.messageHandlers.senderModel.postMessage({body: 'removeWebView'});
+    }
     async componentDidMount(){
-        var _this = this
+        if(sessionStorage.ios==1){
+            var fanhui =  document.getElementById("fanhui");
+            fanhui.style.display = 'block';
+        }
+
+        var _this = this;
         setTimeout(function () {
             var player = polyvObject('#plv').videoPlayer({
                 'width':'100%',
@@ -23,11 +32,19 @@ class PlayerTop extends React.Component{
                 'flashvars':{'autoplay':'false'}
             });
         },300)
-
     };
     render(){
         return(
-           <div id="plv"></div>
+            <div className="playNews">
+                <div className="playNews-one">
+                    <h3>{this.props.head}</h3>
+                    <div className="xiayiwei clearfix"><p>{this.props.time}</p><p><img src={renshu} alt=""/><span id="xqshangbuqi">{this.props.liulancishu}</span>人次</p></div>
+                </div>
+                <div id="plv">
+                    <img onClick={this.backs} id="fanhui" src={fanhuihuodong} alt=""/>
+                </div>
+            </div>
+
         )
     }
 }
@@ -63,23 +80,6 @@ class PlayerNews extends React.Component{
 
     }
     async componentDidMount(){
-        var timestamp=new Date().getTime(); //获取当前时间戳
-        function GetRandomNum(min,max)
-        {
-            var Range = max-min;
-            var Rand = Math.random();
-            return (min + Math.round(Rand * Range));
-        }
-
-        //生成播放次数
-        function playNum(id){
-            var playStr=timestamp.toString().substr(4,7)+id;//对时间戳进行运算取值
-            var playNum=Math.ceil(playStr/(15000000+id*10000))+GetRandomNum(10,50);
-            var _thisSpan = document.getElementById("xqshangbuqi")
-            _thisSpan.innerHTML= playNum
-        }
-        playNum(sessionStorage.platXq)
-
         var _thisPn = document.getElementById("zhibogaiyao");
         _thisPn.innerHTML =  this.props.zhibogaiyao
     }
@@ -91,11 +91,6 @@ class PlayerNews extends React.Component{
 
        return(
            <div className="playNews">
-               <div className="playNews-one">
-                   <h3>{this.props.head}</h3>
-                   <p className="shijian">时间</p>
-                   <div className="xiayiwei clearfix"><p>2017-06-16 18:00</p><p><img src={renshu} alt=""/><span id="xqshangbuqi">746</span>人次</p></div>
-               </div>
                <div className="playTeacher">
                    <div className="playTeacher-head">
                        <ul className="clearfix">
@@ -124,11 +119,12 @@ export default class Player extends React.Component{
         }
     }
     async componentDidMount(){
+       sessionStorage.ios = this.props.location.query.iOS;
        var data = {
            "action": "wapContentAction",
            "method":"getContentDetails",
            "data": {
-               "id": sessionStorage.platXq //内容id
+               "id": this.props.params.id //内容id
            }
        };
        ajaxmode(data).then((msg)=>{
@@ -146,7 +142,9 @@ export default class Player extends React.Component{
                 head:this.state.server.contentTitle,
                 teacherNaem:this.state.server.contentTeacher.teacherName,
                 teacherSummary:this.state.server.contentTeacher.teacherSummary,
-                zhibogaiyao:this.state.server.contentDetails
+                zhibogaiyao:this.state.server.contentDetails,
+                time:this.state.server.createTime,
+                liulancishu:this.state.server.contentViewCount,
             };
             return(
                 <div className="PlayerBody">
